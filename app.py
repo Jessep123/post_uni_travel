@@ -62,46 +62,47 @@ ui.tags.style("""
 # ================================================================================================================================
 # Explore Tab
 # ================================================================================================================================
-with ui.navset_pill(id="tab"):
-    with ui.nav_panel("Explore"):
-        with ui.layout_sidebar():
-            with ui.sidebar(open="desktop"):
-                min_date = df_full["Expense Date"].min().date()
-                max_date = df_full["Expense Date"].max().date()
+with ui.layout_sidebar():
+    with ui.sidebar(open="desktop"):
+        min_date = df_full["Expense Date"].min().date()
+        max_date = df_full["Expense Date"].max().date()
 
-                ui.input_date_range(
-                    "date_range",
-                    "Select date range",
-                    start=min_date,
-                    end=max_date,
-                    min=min_date,
-                    max=max_date
-                )
-                ui.input_checkbox_group(
-                    "who",
-                    "Which Person",
-                    ["Jesse", "Bridget"],
-                    selected=["Jesse"],
-                    inline=True,
-                )
+        ui.input_date_range(
+            "date_range",
+            "Select date range",
+            start=min_date,
+            end=max_date,
+            min=min_date,
+            max=max_date,
+        )
 
-                # initial checkbox
-                ui.input_checkbox_group(
-                    "where",
-                    "Country",
-                    choices=sorted(df_full["country"].dropna().unique().tolist()),
-                    selected=sorted(df_full["country"].dropna().unique().tolist()),
-                    inline=True,
-                )
+        ui.input_checkbox_group(
+            "who",
+            "Which Person",
+            ["Jesse", "Bridget"],
+            selected=["Jesse"],
+            inline=True,
+        )
 
-                ui.input_radio_buttons(  
-                "avg_type",  
-                "Average Type",  
-                choices = {"mean": "Mean", "median": "Median"}, 
-                selected = 'mean' 
-                )  
+        ui.input_checkbox_group(
+            "where",
+            "Country",
+            choices=sorted(df_full["country"].dropna().unique().tolist()),
+            selected=sorted(df_full["country"].dropna().unique().tolist()),
+            inline=True,
+        )
 
-                ui.input_action_button("reset", "Reset filter")
+        ui.input_radio_buttons(
+            "avg_type",
+            "Average Type",
+            choices={"mean": "Mean", "median": "Median"},
+            selected="mean",
+        )
+
+        ui.input_action_button("reset", "Reset filter")
+
+    with ui.navset_pill(id="tab"):
+        with ui.nav_panel("Explore"):
 
             with ui.layout_columns(fill=False):
 
@@ -313,165 +314,165 @@ with ui.navset_pill(id="tab"):
 # Our Journey tab
 # ================================================================================================================================
 
-    with ui.nav_panel("Our Journey"):
-        with ui.card():
-            @render_plotly
-            def journey_map():
-                map_df = journey_map_df()
+        with ui.nav_panel("Our Journey"):
+            with ui.card():
+                @render_plotly
+                def journey_map():
+                    map_df = journey_map_df()
 
-                if map_df.empty:
-                    fig = go.Figure()
-                    fig.add_annotation(
-                        text="No location data available for the current filters.",
-                        showarrow=False,
-                        x=0.5, y=0.5,
-                        xref="paper", yref="paper"
+                    if map_df.empty:
+                        fig = go.Figure()
+                        fig.add_annotation(
+                            text="No location data available for the current filters.",
+                            showarrow=False,
+                            x=0.5, y=0.5,
+                            xref="paper", yref="paper"
+                        )
+                        fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+                        return fig
+
+                    lat = map_df["latitude"].astype(float)
+                    lon = map_df["longitude"].astype(float)
+
+                    exclude_cols = {"Expense Date", "Date", "latitude", "longitude", "town"}
+                    category_cols = [c for c in map_df.columns if c not in exclude_cols]
+
+                    # Replace NaN values so JSON serialization succeeds
+                    map_df["town"] = map_df["town"].fillna("").astype(str)
+                    map_df["Date"] = map_df["Date"].fillna("").astype(str)
+                    map_df[category_cols] = map_df[category_cols].fillna(0)
+
+                    # customdata = np.stack(
+                    #     [map_df["town"], map_df["Date"]] + [map_df[c] for c in category_cols],
+                    #     axis=-1
+                    # )
+
+                    # hover_lines = [
+                    #     "<b>%{customdata[0]}</b>",
+                    #     "Date: %{customdata[1]}",
+                    # ]
+                    # for i, col in enumerate(category_cols, start=2):
+                    #     hover_lines.append(f"{col}: $%{{customdata[{i}]:.2f}}")
+
+                    # hovertemplate = "<br>".join(hover_lines) + "<extra></extra>"
+                    
+                    # def make_hover_text(row):
+                    #     lines = [f"<b>{row['town']}</b>", f"Date: {row['Date']}"]
+
+                    #     for col in category_cols:
+                    #         val = row[col]
+                    #         if pd.notna(val) and val != 0:
+                    #             lines.append(f"{col}: ${val:.2f}")
+
+                    #     return "<br>".join(lines) + "<extra></extra>"
+
+                    # hover_text = map_df.apply(make_hover_text, axis=1)
+
+                    # Build grouped hover text by location
+                    hover_lookup = {}
+
+                    group_cols = ["latitude", "longitude", "town"]
+
+                    for (lat_val, lon_val, town_val), group in map_df.groupby(group_cols, sort=False):
+
+                        lines = [f"<b>{town_val}</b>"]
+
+                        # sort by date so hover is chronological
+                        group = group.sort_values("Expense Date")
+
+                        for _, row in group.iterrows():
+
+                            lines.append(f"Date: {row['Date']}")
+
+                            for col in category_cols:
+                                val = row[col]
+
+                                if pd.notna(val) and val != 0:
+                                    lines.append(f"{col}: ${val:.2f}")
+
+                        hover_lookup[(lat_val, lon_val, town_val)] = (
+                            "<br>".join(lines) + "<extra></extra>"
+                        )
+
+                    # assign hover text back to every row
+                    hover_text = map_df.apply(
+                        lambda row: hover_lookup[
+                            (row["latitude"], row["longitude"], row["town"])
+                        ],
+                        axis=1
                     )
-                    fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-                    return fig
 
-                lat = map_df["latitude"].astype(float)
-                lon = map_df["longitude"].astype(float)
+                    fig = go.Figure(
+                        go.Scattermap(
+                            lat=lat,
+                            lon=lon,
+                            mode="markers+lines",
+                            text=hover_text,
+                            hovertemplate="%{text}",
+                            # customdata=customdata,
+                            # hovertemplate=hovertemplate,
+                            hoverlabel=dict(namelength=-1),
+                        )
+                    )
 
-                exclude_cols = {"Expense Date", "Date", "latitude", "longitude", "town"}
-                category_cols = [c for c in map_df.columns if c not in exclude_cols]
+                    padding = 0.2
+                    center = {"lat": float(lat.mean()), "lon": float(lon.mean())}
 
-                # Replace NaN values so JSON serialization succeeds
-                map_df["town"] = map_df["town"].fillna("").astype(str)
-                map_df["Date"] = map_df["Date"].fillna("").astype(str)
-                map_df[category_cols] = map_df[category_cols].fillna(0)
+                    lat_range = (lat.max() - lat.min()) + padding * 2
+                    lon_range = (lon.max() - lon.min()) + padding * 2
+                    max_range = max(lat_range, lon_range)
 
-                # customdata = np.stack(
-                #     [map_df["town"], map_df["Date"]] + [map_df[c] for c in category_cols],
-                #     axis=-1
-                # )
+                    zoom = 8 - np.log(max_range + 1e-6)
+                    zoom = max(min(zoom, 15), 3)
 
-                # hover_lines = [
-                #     "<b>%{customdata[0]}</b>",
-                #     "Date: %{customdata[1]}",
-                # ]
-                # for i, col in enumerate(category_cols, start=2):
-                #     hover_lines.append(f"{col}: $%{{customdata[{i}]:.2f}}")
+                    fig.update_layout(
+                        map=dict(
+                            center=center,
+                            zoom=zoom,
+                            style="open-street-map",
+                        ),
+                        margin={"r": 0, "t": 0, "l": 0, "b": 0},
+                        height=650,
+                    )
 
-                # hovertemplate = "<br>".join(hover_lines) + "<extra></extra>"
+                    return fig              
                 
-                # def make_hover_text(row):
-                #     lines = [f"<b>{row['town']}</b>", f"Date: {row['Date']}"]
-
-                #     for col in category_cols:
-                #         val = row[col]
-                #         if pd.notna(val) and val != 0:
-                #             lines.append(f"{col}: ${val:.2f}")
-
-                #     return "<br>".join(lines) + "<extra></extra>"
-
-                # hover_text = map_df.apply(make_hover_text, axis=1)
-
-                # Build grouped hover text by location
-                hover_lookup = {}
-
-                group_cols = ["latitude", "longitude", "town"]
-
-                for (lat_val, lon_val, town_val), group in map_df.groupby(group_cols, sort=False):
-
-                    lines = [f"<b>{town_val}</b>"]
-
-                    # sort by date so hover is chronological
-                    group = group.sort_values("Expense Date")
-
-                    for _, row in group.iterrows():
-
-                        lines.append(f"Date: {row['Date']}")
-
-                        for col in category_cols:
-                            val = row[col]
-
-                            if pd.notna(val) and val != 0:
-                                lines.append(f"{col}: ${val:.2f}")
-
-                    hover_lookup[(lat_val, lon_val, town_val)] = (
-                        "<br>".join(lines) + "<extra></extra>"
-                    )
-
-                # assign hover text back to every row
-                hover_text = map_df.apply(
-                    lambda row: hover_lookup[
-                        (row["latitude"], row["longitude"], row["town"])
-                    ],
-                    axis=1
-                )
-
-                fig = go.Figure(
-                    go.Scattermap(
-                        lat=lat,
-                        lon=lon,
-                        mode="markers+lines",
-                        text=hover_text,
-                        hovertemplate="%{text}",
-                        # customdata=customdata,
-                        # hovertemplate=hovertemplate,
-                        hoverlabel=dict(namelength=-1),
-                    )
-                )
-
-                padding = 0.2
-                center = {"lat": float(lat.mean()), "lon": float(lon.mean())}
-
-                lat_range = (lat.max() - lat.min()) + padding * 2
-                lon_range = (lon.max() - lon.min()) + padding * 2
-                max_range = max(lat_range, lon_range)
-
-                zoom = 8 - np.log(max_range + 1e-6)
-                zoom = max(min(zoom, 15), 3)
-
-                fig.update_layout(
-                    map=dict(
-                        center=center,
-                        zoom=zoom,
-                        style="open-street-map",
-                    ),
-                    margin={"r": 0, "t": 0, "l": 0, "b": 0},
-                    height=650,
-                )
-
-                return fig              
-            
-        #Map dataframe for manually checking results
-        # @render.data_frame
-        # def journey_table():
-        #     return journey_map_df()
-    
-# ================================================================================================================================
-# Dataframe tab
-# ================================================================================================================================
-    with ui.nav_panel("Dataframe"):
-        @render.data_frame
-        def table():
-            return render.DataGrid(filtered_df())
+            #Map dataframe for manually checking results
+            # @render.data_frame
+            # def journey_table():
+            #     return journey_map_df()
+        
+    # ================================================================================================================================
+    # Dataframe tab
+    # ================================================================================================================================
+        with ui.nav_panel("Dataframe"):
+            @render.data_frame
+            def table():
+                return render.DataGrid(filtered_df())
         
 # ================================================================================================================================
 # Jesse Owe Bridget Tab
 # ================================================================================================================================
         
-    with ui.nav_panel("Transfers"):
-        with ui.value_box():
-            "Jesse Owes"
-            @render.express
-            def jesse_owes():
-                df = filtered_df()
-                jesse_spend = df[df['Person'] == 'Jesse']["Price NZD"].sum()
-                jesse_transfer = transfer_df["Price"].sum()
-                jesse_owe = jesse_spend -jesse_transfer
-                colour = "red" if jesse_owe > 0 else "green"
+        with ui.nav_panel("Transfers"):
+            with ui.value_box():
+                "Jesse Owes"
+                @render.express
+                def jesse_owes():
+                    df = filtered_df()
+                    jesse_spend = df[df['Person'] == 'Jesse']["Price NZD"].sum()
+                    jesse_transfer = transfer_df["Price"].sum()
+                    jesse_owe = jesse_spend -jesse_transfer
+                    colour = "red" if jesse_owe > 0 else "green"
 
-                ui.HTML(
-                    f"<span style='color:{colour}; font-weight:bold;'>"
-                    f"${jesse_owe:,.2f}"
-                    f"</span>"
-                )
-        @render.data_frame
-        def transfer_table():
-            return render.DataGrid(transfer_df)
+                    ui.HTML(
+                        f"<span style='color:{colour}; font-weight:bold;'>"
+                        f"${jesse_owe:,.2f}"
+                        f"</span>"
+                    )
+            @render.data_frame
+            def transfer_table():
+                return render.DataGrid(transfer_df)
 
 # ================================================================================================================================
 # Reactive calcs and functions
