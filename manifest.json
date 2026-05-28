@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "locale": "English_New Zealand.1252",
+  "metadata": {
+    "appmode": "python-shiny",
+    "entrypoint": "shiny.express.app:app_2e_py"
+  },
+  "python": {
+    "version": "3.14.0",
+    "package_manager": {
+      "name": "pip",
+      "version": "26.1",
+      "package_file": "requirements.txt"
+    }
+  },
+  "files": {
+    "requirements.txt": {
+      "checksum": "4889fc203598d04283a921c3190dbb3c"
+    },
+    ".gitignore": {
+      "checksum": "49232cb18318e632f5466d9400f87025"
+    },
+    ".vscode/settings.json": {
+      "checksum": "fdb8e89c302d988c6d9658561072914e"
+    },
+    "app.py": {
+      "checksum": "dbab60e928cb34f6715b6416a83696fe"
+    },
+    "camino_key.json": {
+      "checksum": "5c5decd5a9223600b8cc8bcd98fdae93"
+    },
+    "google_sheet_import.py": {
+      "checksum": "6c1e1b3a85ff9b9fdde0213b598d3acb"
+    },
+    "test.ipynb": {
+      "checksum": "6bf9dc9da801c4f5a8bd04fdcad75a4c"
+    },
+    "www/7_11_bby.JPG": {
+      "checksum": "3d450aca1e55d30d3541fe4b0defbd79"
+    },
+    "www/chomp.jpeg": {
+      "checksum": "b9e66dc08073cbe10c22aef064a390fc"
+    },
+    "www/flight_socks.jpeg": {
+      "checksum": "ce712aca13196158e37db40bd1f32927"
+    },
+    "www/nap.jpeg": {
+      "checksum": "9562547def536d238da90176d5a5caf4"
+    }
+  }
+}
