@@ -33,6 +33,31 @@ df_full["country"] = (
     .fillna("NA")
     .astype("string")
 )
+
+def rebuild_data():
+    global df_full, transfer_df, df_locations, min_date, max_date
+
+    # clear cached loaders so the next call hits Google Sheets again
+    load_processed_data.cache_clear()
+    load_locations_data.cache_clear()
+
+    # reload fresh data
+    df_full, transfer_df = load_processed_data()
+    df_locations = load_locations_data()
+
+    # rebuild merged dataset
+    df_full = df_full.merge(
+        df_locations[["Date", "country"]],
+        left_on="Expense Date",
+        right_on="Date",
+        how="left",
+    )
+    df_full = df_full.drop(columns=["Date"])
+    df_full["country"] = df_full["country"].fillna("NA").astype("string")
+
+    # update date bounds used by the UI
+    min_date = df_full["Expense Date"].min().date()
+    max_date = df_full["Expense Date"].max().date()
 # ================================================================================================================================
 # UI
 # ================================================================================================================================
@@ -100,6 +125,8 @@ with ui.layout_sidebar():
         )
 
         ui.input_action_button("reset", "Reset filter")
+
+        ui.input_action_button("refresh_data", "Refresh data")
 
     with ui.navset_pill(id="tab"):
         with ui.nav_panel("Explore"):
@@ -705,3 +732,22 @@ def journey_map_df():
     map_df["Date"] = pd.to_datetime(map_df["Expense Date"]).dt.strftime("%Y-%m-%d")
 
     return map_df.sort_values("Expense Date")
+
+@reactive.effect
+@reactive.event(input.refresh_data)
+def _():
+    rebuild_data()
+
+    ui.update_date_range(
+        "date_range",
+        start=min_date,
+        end=max_date,
+        min=min_date,
+        max=max_date,
+    )
+
+    ui.update_checkbox_group(
+        "where",
+        choices=sorted(df_full["country"].dropna().unique().tolist()),
+        selected=sorted(df_full["country"].dropna().unique().tolist()),
+    )
