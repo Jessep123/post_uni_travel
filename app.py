@@ -129,7 +129,7 @@ with ui.layout_sidebar():
         ui.input_action_button("refresh_data", "Refresh data")
 
     with ui.navset_pill(id="tab"):
-        with ui.nav_panel("Explore"):
+        with ui.nav_panel("Quick Stats"):
 
             with ui.layout_columns(fill=False):
 
@@ -167,7 +167,8 @@ with ui.layout_sidebar():
                         df = filtered_df()
                         cost = df["Price NZD"].sum()
                         f"${cost:,.2f}"
-            
+        
+        with ui.nav_panel("Explore"):
             with ui.navset_pill(id="viz_tabs"):
                 with ui.nav_panel("Line"):
                     with ui.card():
@@ -201,6 +202,13 @@ with ui.layout_sidebar():
                                 xaxis_title="Date",
                                 yaxis_title="Spend NZD",
                                 hovermode="x unified",
+                                legend=dict(
+                                        orientation="h",
+                                        yanchor="top",
+                                        y=-0.2,
+                                        xanchor="center",
+                                        x=0.5
+                                    )
                             )
 
                             fig.update_traces(
@@ -262,7 +270,14 @@ with ui.layout_sidebar():
                                     )
                                 )
 
-                            fig.update_layout(yaxis_title="Price (NZD)")
+                            fig.update_layout(yaxis_title="Price (NZD)",
+                                              legend=dict(
+                                        orientation="h",
+                                        yanchor="top",
+                                        y=-0.2,
+                                        xanchor="center",
+                                        x=0.5
+                                    ))
                             return fig
 
                         ui.input_checkbox(
@@ -308,6 +323,15 @@ with ui.layout_sidebar():
                                     "Transport": "#a21414",
                                 }
                             )
+
+                            fig.update_layout(
+                                              legend=dict(
+                                        orientation="h",
+                                        yanchor="top",
+                                        y=-0.2,
+                                        xanchor="center",
+                                        x=0.5
+                                    ))
 
                             return fig
 
