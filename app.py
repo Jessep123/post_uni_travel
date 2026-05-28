@@ -259,25 +259,6 @@ with ui.layout_sidebar():
                             inline=True,
                         )
 
-                with ui.nav_panel("Heatmap"):
-                    with ui.card():
-                        @render_plotly
-                        def heatmap():
-                            df = filtered_df()
-                            df["weekday"] = df["Expense Date"].dt.day_name()
-                            df["week"] = df["Expense Date"].dt.isocalendar().week
-
-                            heat = df.groupby(["weekday", "week"])["Price NZD"].sum().reset_index()
-
-                            fig = px.density_heatmap(
-                                heat,
-                                x="week",
-                                y="weekday",
-                                z="Price NZD",
-                                title="Spending Heatmap"
-                            )
-
-                            return fig
 
                 with ui.nav_panel("Pie Chart"):
                     with ui.card():
