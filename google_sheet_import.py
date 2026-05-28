@@ -31,7 +31,7 @@ def get_google_sheet_data():
 
     df = pd.DataFrame(rows, columns=headers)
 
-    df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
+    df["Timestamp"] = pd.to_datetime(df["Timestamp"],format="%m/%d/%Y %H:%M:%S", errors="coerce")
 
     df["Category"] = df["Category"].astype("string")
     df["Currency"] = df["Currency"].astype("string")
@@ -41,7 +41,7 @@ def get_google_sheet_data():
     df["Price"] = pd.to_numeric(df["Price"], errors="coerce")
 
     df["First Night in Accom"] = pd.to_datetime(
-        df["First Night in Accom"], errors="coerce"
+        df["First Night in Accom"], format="%m/%d/%Y", errors="coerce"
     )
 
     df["Total Nights in Accom"] = pd.to_numeric(
@@ -110,22 +110,48 @@ def add_nzd_converted_column(df):
 
     rate_cache = {}
 
-    unique_dates = (
+    unique_dates = sorted(
         pd.to_datetime(df["Expense Date"], errors="coerce")
         .dropna()
-        .dt.strftime("%Y-%m-%d")
+        .dt.normalize()
         .unique()
     )
 
+    def fetch_rates_for_date(target_date, max_lookback_days=3650):
+        """Return rates for target_date or the most recent earlier available date."""
+        current_date = pd.Timestamp(target_date).normalize()
+        lower_bound = current_date - pd.Timedelta(days=max_lookback_days)
+
+        while current_date >= lower_bound:
+            expense_date = current_date.strftime("%Y-%m-%d")
+
+            if expense_date in rate_cache:
+                return rate_cache[expense_date]
+
+            url = f"https://api.frankfurter.dev/v1/{expense_date}"
+            params = {"base": "NZD"}
+
+            try:
+                response = requests.get(url, params=params, timeout=20)
+                if response.status_code == 404:
+                    current_date -= pd.Timedelta(days=1)
+                    continue
+
+                response.raise_for_status()
+                data = response.json()
+                rates = data.get("rates", {})
+
+                rate_cache[expense_date] = rates
+                return rates
+
+            except requests.RequestException:
+                # For transient errors, try the previous date as well.
+                current_date -= pd.Timedelta(days=1)
+
+        return None
+
     for expense_date in unique_dates:
-        url = f"https://api.frankfurter.dev/v1/{expense_date}"
-        params = {"base": "NZD"}
-
-        response = requests.get(url, params=params)
-        response.raise_for_status()
-
-        data = response.json()
-        rate_cache[expense_date] = data["rates"]
+        rate_cache[expense_date.strftime("%Y-%m-%d")] = fetch_rates_for_date(expense_date)
 
     def convert_to_nzd(row):
         currency = row["Currency"]
