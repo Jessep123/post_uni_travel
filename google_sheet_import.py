@@ -6,10 +6,12 @@ from googleapiclient.discovery import build
 from google.oauth2.service_account import Credentials
 import requests
 
+import json
+
 
 def get_google_sheet_data():
     # Configuration
-    SERVICE_ACCOUNT_FILE = 'camino_key.json'
+    SERVICE_ACCOUNT_FILE = json.loads(os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"])
     SPREADSHEET_ID = '1MVeRNsn2NJaLaHRGiSYtZYq9RyKD7MNE7bYYAMbUX6g'
     RANGE_NAME = 'Responses' 
     
@@ -194,7 +196,7 @@ def load_processed_data():
 
 @lru_cache(maxsize=1)
 def load_locations_data():
-    SERVICE_ACCOUNT_FILE = "camino_key.json"
+    SERVICE_ACCOUNT_FILE = json.loads(os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"])
     SPREADSHEET_ID = "1MVeRNsn2NJaLaHRGiSYtZYq9RyKD7MNE7bYYAMbUX6g"
     RANGE_NAME = "Locations"
     scopes = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
