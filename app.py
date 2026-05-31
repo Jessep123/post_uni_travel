@@ -138,7 +138,7 @@ with ui.layout_sidebar():
                     @render.express
                     def daily_spend():
                         df = filtered_df()
-                        daily_total = df[df['Category'] != "Flight"].groupby("Expense Date")["Price NZD"].sum()
+                        daily_total = df[df['Category'] != "Flights"].groupby("Expense Date")["Price NZD"].sum()
                         value = avg_calc(daily_total)
                         f"${value:,.2f}"
 
@@ -189,7 +189,7 @@ with ui.layout_sidebar():
                                     "Food": "#2ca02c",
                                     "Accommodation": "#1f77b4",
                                     "Misc": "#ff7f0e",
-                                    "Flight": "#9467bd",
+                                    "Flights": "#9467bd",
                                     "Transport": "#a21414",
                                     "Total": "#000000",
                                     "Rolling Average": "#444444",
@@ -244,7 +244,7 @@ with ui.layout_sidebar():
                                     "Food": "#2ca02c",
                                     "Accommodation": "#1f77b4",
                                     "Misc": "#ff7f0e",
-                                    "Flight": "#9467bd",
+                                    "Flights": "#9467bd",
                                     "Transport": "#a21414",
                                 },
                             )
@@ -319,7 +319,7 @@ with ui.layout_sidebar():
                                     "Food": "#2ca02c",
                                     "Accommodation": "#1f77b4",
                                     "Misc": "#ff7f0e",
-                                    "Flight": "#9467bd",
+                                    "Flights": "#9467bd",
                                     "Transport": "#a21414",
                                 }
                             )
@@ -566,7 +566,7 @@ def _():
 @reactive.calc
 def line_plot_df():
     df = filtered_df()
-    df = df[df["Category"] != "Flight"].copy()
+    df = df[df["Category"] != "Flights"].copy()
 
     df["Expense Date"] = pd.to_datetime(df["Expense Date"]).dt.normalize()
 
@@ -646,7 +646,7 @@ def category_choices():
 def _():
 
     cats = category_choices()
-    cats = [c for c in cats if c != "Flight"]
+    cats = [c for c in cats if c != "Flights"]
     line_cats = cats + ["Rolling Average", "Total"]
 
     ui.update_checkbox_group(
@@ -708,7 +708,7 @@ def bar_data():
                 .mean()
             )
 
-            df = df[df['Category'] != 'Flight'] #removing flight as it is not relevant to daily spending
+            df = df[df['Category'] != 'Flights'] #removing flight as it is not relevant to daily spending
 
     return df
 
