@@ -69,39 +69,59 @@ def get_google_sheet_data():
     return df, transfer_df
 
 #Helper function to split accomodation rows
+# Helper function to split accommodation rows across each night stayed.
 def split_accommodation_rows(df):
+    """Expand accommodation purchases into one row per night.
+
+    The Google Sheet stores the full accommodation charge on a single row,
+    alongside the first night and the total number of nights. This helper
+    turns that into daily rows so downstream charts and averages treat each
+    night as its own expense.
+    """
+
     rows = []
 
     for _, row in df.iterrows():
-        is_accom = str(row.get("Category", "")).strip().lower() == "accommodation"
-        first_night = pd.to_datetime(row.get("First Night in Accom"), errors="coerce")
-        total_nights = pd.to_numeric(row.get("Total Nights in Accom"), errors="coerce")
+        category = str(row.get("Category", "")).strip().casefold()
+        first_night = row.get("First Night in Accom")
+        nights_raw = row.get("Total Nights in Accom")
+        price = row.get("Price")
 
-        if is_accom and pd.notna(first_night) and pd.notna(total_nights) and total_nights > 0:
-            total_nights = int(total_nights)
-            nightly_price = row["Price"] / total_nights
+        is_accom = category in {"accom", "accommodation"}
+        has_accom_dates = pd.notna(first_night)
+        has_nights = pd.notna(nights_raw)
 
-            for night in range(total_nights):
-                new_row = row.copy()
+        if is_accom and has_accom_dates and has_nights and pd.notna(price):
+            try:
+                total_nights = int(float(nights_raw))
+            except (TypeError, ValueError):
+                total_nights = 0
 
-                accom_date = (first_night + pd.Timedelta(days=night)).normalize()
+            if total_nights > 0:
+                nightly_price = price / total_nights
 
-                # This is the date your plotting code should use
-                new_row["Expense Date"] = accom_date
-                new_row["Price"] = nightly_price
-                new_row["Total Nights in Accom"] = 1
+                for night in range(total_nights):
+                    new_row = row.copy()
 
-                rows.append(new_row)
-        else:
-            rows.append(row.copy())
+                    accom_date = (
+                        pd.Timestamp(first_night) + pd.Timedelta(days=night)
+                    ).normalize()
+
+                    new_row["Expense Date"] = accom_date
+                    new_row["Price"] = nightly_price
+                    new_row["Total Nights in Accom"] = 1
+
+                    if "Accommodation Night" in new_row.index:
+                        new_row["Accommodation Night"] = accom_date
+
+                    rows.append(new_row)
+                continue
+
+        rows.append(row.copy())
 
     out = pd.DataFrame(rows).reset_index(drop=True)
-
-    # Keep it clean for grouping / plotting
     out["Expense Date"] = pd.to_datetime(out["Expense Date"], errors="coerce").dt.normalize()
-
     return out
-
 #Helper function to convert values to nzd
 def add_nzd_converted_column(df):
     df = df.copy()
