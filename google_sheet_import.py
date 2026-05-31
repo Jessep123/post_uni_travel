@@ -73,21 +73,20 @@ def split_accommodation_rows(df):
     rows = []
 
     for _, row in df.iterrows():
-        is_accom = row["Category"] == "Accommodation"
-        has_accom_dates = pd.notna(row["First Night in Accom"])
-        has_nights = pd.notna(row["Total Nights in Accom"])
+        is_accom = str(row.get("Category", "")).strip().lower() == "accommodation"
+        first_night = pd.to_datetime(row.get("First Night in Accom"), errors="coerce")
+        total_nights = pd.to_numeric(row.get("Total Nights in Accom"), errors="coerce")
 
-        if is_accom and has_accom_dates and has_nights:
-            total_nights = int(row["Total Nights in Accom"])
+        if is_accom and pd.notna(first_night) and pd.notna(total_nights) and total_nights > 0:
+            total_nights = int(total_nights)
             nightly_price = row["Price"] / total_nights
 
             for night in range(total_nights):
                 new_row = row.copy()
 
-                accom_date = (
-                    row["First Night in Accom"] + pd.Timedelta(days=night)
-                ).normalize()
+                accom_date = (first_night + pd.Timedelta(days=night)).normalize()
 
+                # This is the date your plotting code should use
                 new_row["Expense Date"] = accom_date
                 new_row["Price"] = nightly_price
                 new_row["Total Nights in Accom"] = 1
@@ -96,15 +95,12 @@ def split_accommodation_rows(df):
         else:
             rows.append(row.copy())
 
-    return pd.DataFrame(rows).reset_index(drop=True)
+    out = pd.DataFrame(rows).reset_index(drop=True)
 
-    # mask = (
-    #     (df_accom_split["Category"] == "Accommodation") &
-    #     (df_accom_split["Accommodation Night"].notna())
-    # )
+    # Keep it clean for grouping / plotting
+    out["Expense Date"] = pd.to_datetime(out["Expense Date"], errors="coerce").dt.normalize()
 
-    # df_accom_split.loc[mask, "Expense Date"] = df_accom_split.loc[mask, "Accommodation Night"]
-
+    return out
 
 #Helper function to convert values to nzd
 def add_nzd_converted_column(df):
