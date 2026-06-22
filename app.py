@@ -156,7 +156,7 @@ with ui.layout_sidebar():
                     @render.express
                     def accom_av():
                         df = filtered_df()
-                        accom = df[df['Category'] == 'Accommodation'].groupby("Expense Date")["Price NZD"].sum()
+                        accom = df[df['Category'] == 'Accomm'].groupby("Expense Date")["Price NZD"].sum()
                         value = avg_calc(accom)
                         f"${value:,.2f}"
 
