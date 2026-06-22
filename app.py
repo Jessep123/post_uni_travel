@@ -126,7 +126,7 @@ with ui.layout_sidebar():
 
         ui.input_action_button("reset", "Reset filter")
 
-        ui.input_action_button("refresh_data", "Refresh data")
+        ui.input_action_button("refresh_data", "Refresh data - BRIDGET DON'T TOUCH PLEASE X")
 
     with ui.navset_pill(id="tab"):
         with ui.nav_panel("Quick Stats"):
