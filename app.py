@@ -483,7 +483,17 @@ with ui.layout_sidebar():
         with ui.nav_panel("Dataframe"):
             @render.data_frame
             def table():
-                return render.DataGrid(filtered_df())
+                df = filtered_df()
+
+                columns_to_show = [
+                    "Expense Date",
+                    "Person",
+                    "Category",
+                    "Price NZD",
+                    "Extra Note",
+                    "country"
+                ]
+                return render.DataGrid(df[columns_to_show])
         
 # ================================================================================================================================
 # Jesse Owe Bridget Tab
