@@ -134,39 +134,47 @@ with ui.layout_sidebar():
         ui.input_action_button("refresh_data", "Refresh data - BRIDGET DON'T TOUCH PLEASE X")
     with ui.navset_pill(id="tab"):
         with ui.nav_panel("Today"):
+
+            @render.text
+            def today_date():
+                return date.today().strftime("%d %B %Y")
+
+            ui.h3("Today's Date")
+            ui.output_text("today_date")
+            
             with ui.value_box(showcase=ui.img(src="flight_socks.jpeg", style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-top: 10px;", showcase_layout="left center")):
-                                "Total Today"
-                                @render.express
-                                def flight_cost():
-                                    df = filtered_df()
-                                    today = date.today()
+                "Total Today"
+                @render.express
+                def today_cost():
+                    df = filtered_df()
+                    today = date.today()
 
-                                    today_expenses = df[
-                                        df["Expense Date"].dt.date == today
-                                    ]
+                    today_expenses = df[
+                        df["Expense Date"].dt.date == today
+                    ]
 
-                                    cost = today_expenses["Price NZD"].sum()
-                                    f"${cost:,.2f}"
+                    cost = today_expenses["Price NZD"].sum()
+                    f"${cost:,.2f}"
 
-                                    @render.data_frame
-                                    def today_table():
-                                        df = filtered_df()
-                                        today = date.today()
+            @render.data_frame
+            def today_table():
+                df = filtered_df()
+                today = date.today()
 
-                                        today_expenses = df[
-                                            df["Expense Date"].dt.date == today
-                                        ]
+                today_expenses = df[
+                    df["Expense Date"].dt.date == today
+                ]
 
-                                        columns_to_show = [
-                                                            "Expense Date",
-                                                            "Person",
-                                                            "Category",
-                                                            "Price NZD",
-                                                            "Extra Note",
-                                                            "country"
-                                                        ]
+                columns_to_show = [
+                                    "Expense Date",
+                                    "Person",
+                                    "Category",
+                                    "Price NZD",
+                                    "Extra Note",
+                                    "country"
+                                ]
 
-                                        return today_expenses[columns_to_show]
+                return today_expenses[columns_to_show]
 
         with ui.nav_panel("Summary Stats"):
 
