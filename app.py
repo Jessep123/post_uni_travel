@@ -1,4 +1,7 @@
 #Required packages and whatnot
+import json
+import os
+
 from google_sheet_import import load_processed_data
 import pandas as pd
 import numpy as np
@@ -129,6 +132,13 @@ with ui.layout_sidebar():
         ui.input_action_button("refresh_data", "Refresh data - BRIDGET DON'T TOUCH PLEASE X")
 
     with ui.navset_pill(id="tab"):
+        with ui.nav_panel("json"):
+            @render.text
+            def service_account_json():
+                return json.dumps(
+                    json.loads(os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"]),
+                    indent=2
+        )
         with ui.nav_panel("Quick Stats"):
 
             with ui.layout_columns(fill=False):
