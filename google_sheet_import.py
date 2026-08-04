@@ -19,6 +19,9 @@ def get_google_sheet_data():
     scopes = ['https://www.googleapis.com/auth/spreadsheets.readonly']
     creds = Credentials.from_service_account_info(service_account_info , scopes=scopes)
 
+    print(creds)
+    print(service_account_info)
+
     # Build the service
     service = build('sheets', 'v4', credentials=creds)
 
