@@ -2,6 +2,8 @@
 import json
 import os
 
+from datetime import date
+
 from google_sheet_import import load_processed_data
 import pandas as pd
 import numpy as np
@@ -131,8 +133,22 @@ with ui.layout_sidebar():
 
         ui.input_action_button("refresh_data", "Refresh data - BRIDGET DON'T TOUCH PLEASE X")
     with ui.navset_pill(id="tab"):
+        with ui.nav_panel("Today"):
+            with ui.value_box(showcase=ui.img(src="flight_socks.jpeg", style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-top: 10px;", showcase_layout="left center")):
+                                "Total Today"
+                                @render.express
+                                def flight_cost():
+                                    df = filtered_df()
+                                    today = date.today()
 
-        with ui.nav_panel("Quick Stats"):
+                                    today_expenses = df[
+                                        df["Expense Date"].dt.date == today
+                                    ]
+
+                                    cost = today_expenses["Price NZD"].sum()
+                                    f"${cost:,.2f}"
+
+        with ui.nav_panel("Summary Stats"):
 
             with ui.layout_columns(fill=False):
 
