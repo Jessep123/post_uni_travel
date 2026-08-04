@@ -148,6 +148,17 @@ with ui.layout_sidebar():
                                     cost = today_expenses["Price NZD"].sum()
                                     f"${cost:,.2f}"
 
+                                    @render.data_frame
+                                    def today_table():
+                                        df = filtered_df()
+                                        today = date.today()
+
+                                        today_expenses = df[
+                                            df["Expense Date"].dt.date == today
+                                        ]
+
+                                        return today_expenses
+
         with ui.nav_panel("Summary Stats"):
 
             with ui.layout_columns(fill=False):
