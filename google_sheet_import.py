@@ -145,7 +145,7 @@ def add_nzd_converted_column(df):
         response = requests.get(
             url,
             params={"base": "NZD"},
-            timeout=10
+            timeout=30
         )
 
         response.raise_for_status()
