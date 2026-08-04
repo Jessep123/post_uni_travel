@@ -136,7 +136,6 @@ with ui.layout_sidebar():
         with ui.nav_panel("Today"):
 
             ui.h3("Today's Date")
-            ui.output_text("today_date")
 
             @render.text
             def today_date():
