@@ -135,12 +135,14 @@ with ui.layout_sidebar():
     with ui.navset_pill(id="tab"):
         with ui.nav_panel("Today"):
 
+            ui.h3("Today's Date")
+            ui.output_text("today_date")
+
             @render.text
             def today_date():
                 return date.today().strftime("%d %B %Y")
 
-            ui.h3("Today's Date")
-            ui.output_text("today_date")
+            
             
             with ui.value_box(showcase=ui.img(src="flight_socks.jpeg", style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-top: 10px;", showcase_layout="left center")):
                 "Total Today"
