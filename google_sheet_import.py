@@ -136,38 +136,74 @@ def add_nzd_converted_column(df):
         .unique()
     )
 
-    def fetch_rates_for_date(target_date, max_lookback_days=3650):
-        """Return rates for target_date or the most recent earlier available date."""
+    def fetch_rates_for_period(start_date, end_date):
+        url = (
+            f"https://api.frankfurter.dev/v1/"
+            f"{start_date}..{end_date}"
+        )
+
+        response = requests.get(
+            url,
+            params={"base": "NZD"},
+            timeout=10
+        )
+
+        response.raise_for_status()
+
+        return response.json()["rates"]
+
+    rates = fetch_rates_for_period(
+    df["Expense Date"].min().strftime("%Y-%m-%d"),
+    df["Expense Date"].max().strftime("%Y-%m-%d")
+    )
+
+    def fetch_rates_for_date(target_date, max_lookback_days=120):
+        """Return rates for target_date or the most recent earlier available date from cached period rates."""
+
         current_date = pd.Timestamp(target_date).normalize()
         lower_bound = current_date - pd.Timedelta(days=max_lookback_days)
 
         while current_date >= lower_bound:
             expense_date = current_date.strftime("%Y-%m-%d")
 
-            if expense_date in rate_cache:
-                return rate_cache[expense_date]
+            if expense_date in rates:
+                return rates[expense_date]
 
-            url = f"https://api.frankfurter.dev/v1/{expense_date}"
-            params = {"base": "NZD"}
-
-            try:
-                response = requests.get(url, params=params, timeout=20)
-                if response.status_code == 404:
-                    current_date -= pd.Timedelta(days=1)
-                    continue
-
-                response.raise_for_status()
-                data = response.json()
-                rates = data.get("rates", {})
-
-                rate_cache[expense_date] = rates
-                return rates
-
-            except requests.RequestException:
-                # For transient errors, try the previous date as well.
-                current_date -= pd.Timedelta(days=1)
+            current_date -= pd.Timedelta(days=1)
 
         return None
+
+        # """Return rates for target_date or the most recent earlier available date."""
+        # current_date = pd.Timestamp(target_date).normalize()
+        # lower_bound = current_date - pd.Timedelta(days=max_lookback_days)
+
+        # while current_date >= lower_bound:
+        #     expense_date = current_date.strftime("%Y-%m-%d")
+
+        #     if expense_date in rate_cache:
+        #         return rate_cache[expense_date]
+
+        #     url = f"https://api.frankfurter.dev/v1/{expense_date}"
+        #     params = {"base": "NZD"}
+
+        #     try:
+        #         response = requests.get(url, params=params, timeout=5)
+        #         if response.status_code == 404:
+        #             current_date -= pd.Timedelta(days=1)
+        #             continue
+
+        #         response.raise_for_status()
+        #         data = response.json()
+        #         rates = data.get("rates", {})
+
+        #         rate_cache[expense_date] = rates
+        #         return rates
+
+        #     except requests.RequestException:
+        #         # For transient errors, try the previous date as well.
+        #         current_date -= pd.Timedelta(days=1)
+
+        # return None
 
     for expense_date in unique_dates:
         rate_cache[expense_date.strftime("%Y-%m-%d")] = fetch_rates_for_date(expense_date)
