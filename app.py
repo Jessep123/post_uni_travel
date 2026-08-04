@@ -135,11 +135,11 @@ with ui.layout_sidebar():
     with ui.navset_pill(id="tab"):
         with ui.nav_panel("Today"):
 
-            ui.h3("Today's Date")
+            # ui.h3("Today's Date")
 
-            @render.text
-            def today_date():
-                return date.today().strftime("%d %B %Y")
+            # @render.text
+            # def today_date():
+            #     return date.today().strftime("%d %B %Y")
 
             
             
