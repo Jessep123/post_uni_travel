@@ -157,7 +157,16 @@ with ui.layout_sidebar():
                                             df["Expense Date"].dt.date == today
                                         ]
 
-                                        return today_expenses
+                                        columns_to_show = [
+                                                            "Expense Date",
+                                                            "Person",
+                                                            "Category",
+                                                            "Price NZD",
+                                                            "Extra Note",
+                                                            "country"
+                                                        ]
+
+                                        return today_expenses[columns_to_show]
 
         with ui.nav_panel("Summary Stats"):
 
