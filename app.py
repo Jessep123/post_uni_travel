@@ -213,7 +213,8 @@ with ui.layout_sidebar():
                                             price_col
                                         ]
                                         .sum()
-                                    )                      
+                                    )
+                                                         
                                     f"${today_misc:,.2f}"
 
             ui.input_radio_buttons(
@@ -235,7 +236,9 @@ with ui.layout_sidebar():
                                     "Currency",
                                     "Person"
                                   ]
-
+                df["Price NZD"] = df["Price NZD"].round(2)
+                df["Price"] = df["Price"].round(2)
+                
                 return df[columns_to_show]
 # ================================================================================================================================
 # Summary Stats Tab
