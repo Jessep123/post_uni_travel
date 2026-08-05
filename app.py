@@ -886,7 +886,7 @@ def journey_map_df():
 
 @reactive.calc
 def today_df():
-    df = df_data().copy()
+    df = filtered_df_person().copy()
 
     today = date.today()
      
