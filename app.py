@@ -40,6 +40,8 @@ df_full["country"] = (
     .astype("string")
 )
 
+df_data = reactive.value(df_full)
+
 def rebuild_data():
     global df_full, transfer_df, df_locations, min_date, max_date
 
@@ -223,12 +225,7 @@ with ui.layout_sidebar():
 
             @render.data_frame
             def today_table():
-                df = filtered_df()
-                today = date.today()
-
-                today_expenses = df[
-                    df["Expense Date"].dt.date == today
-                ]
+                df = today_df()
 
                 columns_to_show = [
                                     "Category",
@@ -239,7 +236,7 @@ with ui.layout_sidebar():
                                     "Person"
                                   ]
 
-                return today_expenses[columns_to_show]
+                return df[columns_to_show]
 # ================================================================================================================================
 # Summary Stats Tab
 # ================================================================================================================================
@@ -889,7 +886,7 @@ def journey_map_df():
 
 @reactive.calc
 def today_df():
-    df = df_full.copy()
+    df = df_data().copy()
 
     today = date.today()
      
