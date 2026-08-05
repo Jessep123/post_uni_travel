@@ -90,7 +90,7 @@ ui.tags.style("""
 """)
 
 # ================================================================================================================================
-# Explore Tab
+# Sidebar
 # ================================================================================================================================
 with ui.layout_sidebar():
     with ui.sidebar(open="desktop"):
@@ -132,19 +132,21 @@ with ui.layout_sidebar():
         ui.input_action_button("reset", "Reset filter")
 
         ui.input_action_button("refresh_data", "Refresh data - BRIDGET DON'T TOUCH PLEASE X")
+
     with ui.navset_pill(id="tab"):
+
+# ================================================================================================================================
+# Today Tab
+# ================================================================================================================================
         with ui.nav_panel("Today"):
 
-            # ui.h3("Today's Date")
-
-            # @render.text
-            # def today_date():
-            #     return date.today().strftime("%d %B %Y")
-
-            
+            ui.h3("Today's Date")
+            @render.text
+            def today_date():
+                return date.today().strftime("%d %B %Y")
             
             with ui.value_box(showcase=ui.img(src="flight_socks.jpeg", style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-top: 10px;", showcase_layout="left center")):
-                "Total Today"
+                "Total"
                 @render.express
                 def today_cost():
                     df = filtered_df()
@@ -157,6 +159,55 @@ with ui.layout_sidebar():
                     cost = today_expenses["Price NZD"].sum()
                     f"${cost:,.2f}"
 
+            with ui.value_box(showcase=ui.img(src="chomp.jpeg", style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-top: 10px;", showcase_layout="left center")):
+                                "Food"
+                                @render.express
+                                def food_today():
+                                    df = filtered_df()
+                                    today = date.today()
+                                    
+                                    today_expenses = df[
+                                        df["Expense Date"].dt.date == today
+                                    ]
+                                    today_food = today_expenses[today_expenses['Category'] == 'Food']["Price NZD"].sum()
+                                    f"${today_food:,.2f}"
+
+            with ui.value_box(showcase=ui.img(src="nap.jpeg", style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-top: 10px;", showcase_layout="left center")):
+                                "Accom"
+                                @render.express
+                                def accom_today():
+                                    df = filtered_df()
+                                    today = date.today()
+                                    today_expenses = df[
+                                        df["Expense Date"].dt.date == today
+                                    ]
+                                    today_accom = today_expenses[today_expenses['Category'] == 'Accom']["Price NZD"].sum()
+                                    f"${today_accom:,.2f}"
+
+            with ui.value_box(showcase=ui.img(src="walk.jpeg", style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-top: 10px;", showcase_layout="left center")):
+                                            "Transport"
+                                            @render.express
+                                            def transport_today():
+                                                df = filtered_df()
+                                                today = date.today()
+                                                today_expenses = df[
+                                                    df["Expense Date"].dt.date == today
+                                                ]
+                                                today_transport = today_expenses[today_expenses['Category'] == 'Transport']["Price NZD"].sum()
+                                                f"${today_transport:,.2f}"
+
+            with ui.value_box(showcase=ui.img(src="woof.jpeg", style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-top: 10px;", showcase_layout="left center")):
+                                                        "Misc"
+                                                        @render.express
+                                                        def misc_today():
+                                                            df = filtered_df()
+                                                            today = date.today()
+                                                            today_expenses = df[
+                                                                df["Expense Date"].dt.date == today
+                                                            ]
+                                                            today_misc = today_expenses[today_expenses['Category'] == 'Misc']["Price NZD"].sum()
+                                                            f"${today_misc:,.2f}"
+
             @render.data_frame
             def today_table():
                 df = filtered_df()
@@ -167,15 +218,18 @@ with ui.layout_sidebar():
                 ]
 
                 columns_to_show = [
-                                    "Expense Date",
-                                    "Person",
                                     "Category",
                                     "Price NZD",
                                     "Extra Note",
-                                    "country"
-                                ]
+                                    "Price",
+                                    "Currency",
+                                    "Person"
+                                  ]
 
                 return today_expenses[columns_to_show]
+# ================================================================================================================================
+# Summary Stats Tab
+# ================================================================================================================================
 
         with ui.nav_panel("Summary Stats"):
 
@@ -215,7 +269,11 @@ with ui.layout_sidebar():
                         df = filtered_df()
                         cost = df["Price NZD"].sum()
                         f"${cost:,.2f}"
-        
+
+# ================================================================================================================================
+# Explore Tab
+# ================================================================================================================================
+       
         with ui.nav_panel("Explore"):
             with ui.navset_pill(id="viz_tabs"):
                 with ui.nav_panel("Line"):
@@ -522,9 +580,9 @@ with ui.layout_sidebar():
             # def journey_table():
             #     return journey_map_df()
         
-    # ================================================================================================================================
-    # Dataframe tab
-    # ================================================================================================================================
+# ================================================================================================================================
+# Dataframe tab
+# ================================================================================================================================
         with ui.nav_panel("Dataframe"):
             @render.data_frame
             def table():
