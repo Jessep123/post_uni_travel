@@ -3,6 +3,7 @@ import json
 import os
 
 from datetime import date
+from xmlrpc.client import Transport
 
 from google_sheet_import import load_processed_data
 import pandas as pd
@@ -139,74 +140,86 @@ with ui.layout_sidebar():
 # Today Tab
 # ================================================================================================================================
         with ui.nav_panel("Today"):
-
-            ui.h3("Today's Date")
-            @render.text
-            def today_date():
-                return date.today().strftime("%d %B %Y")
             
             with ui.value_box(showcase=ui.img(src="flight_socks.jpeg", style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-top: 10px;", showcase_layout="left center")):
                 "Total"
                 @render.express
                 def today_cost():
-                    df = filtered_df()
-                    today = date.today()
-
-                    today_expenses = df[
-                        df["Expense Date"].dt.date == today
-                    ]
-
-                    cost = today_expenses["Price NZD"].sum()
+                    today_expenses = today_df()
+                    price_col = input.today_currency()
+                    cost = today_expenses[price_col].sum()          
                     f"${cost:,.2f}"
 
             with ui.value_box(showcase=ui.img(src="chomp.jpeg", style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-top: 10px;", showcase_layout="left center")):
                                 "Food"
                                 @render.express
                                 def food_today():
-                                    df = filtered_df()
-                                    today = date.today()
-                                    
-                                    today_expenses = df[
-                                        df["Expense Date"].dt.date == today
+                                    today_expenses = today_df()
+                                    price_col = input.today_currency()
+
+                                    today_food = (
+                                    today_expenses.loc[
+                                        today_expenses["Category"] == "Food",
+                                        price_col
                                     ]
-                                    today_food = today_expenses[today_expenses['Category'] == 'Food']["Price NZD"].sum()
+                                    .sum()
+                                       ) 
                                     f"${today_food:,.2f}"
 
             with ui.value_box(showcase=ui.img(src="nap.jpeg", style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-top: 10px;", showcase_layout="left center")):
                                 "Accom"
                                 @render.express
                                 def accom_today():
-                                    df = filtered_df()
-                                    today = date.today()
-                                    today_expenses = df[
-                                        df["Expense Date"].dt.date == today
+                                    today_expenses = today_df()
+                                    price_col = input.today_currency()
+
+                                    today_accom = (
+                                    today_expenses.loc[
+                                        today_expenses["Category"] == "Accom",
+                                        price_col
                                     ]
-                                    today_accom = today_expenses[today_expenses['Category'] == 'Accom']["Price NZD"].sum()
+                                    .sum()
+                                       ) 
                                     f"${today_accom:,.2f}"
 
             with ui.value_box(showcase=ui.img(src="walk.jpeg", style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-top: 10px;", showcase_layout="left center")):
-                                            "Transport"
-                                            @render.express
-                                            def transport_today():
-                                                df = filtered_df()
-                                                today = date.today()
-                                                today_expenses = df[
-                                                    df["Expense Date"].dt.date == today
-                                                ]
-                                                today_transport = today_expenses[today_expenses['Category'] == 'Transport']["Price NZD"].sum()
-                                                f"${today_transport:,.2f}"
+                                "Transport"
+                                @render.express
+                                def transport_today():
+                                    today_expenses = today_df()
+                                    price_col = input.today_currency()
+                                    
+                                    today_transport = (
+                                        today_expenses.loc[
+                                            today_expenses["Category"] == "Transport",
+                                            price_col
+                                        ]
+                                        .sum()
+                                    ) 
+                                    f"${today_transport:,.2f}"
 
             with ui.value_box(showcase=ui.img(src="woof.jpeg", style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-top: 10px;", showcase_layout="left center")):
-                                                        "Misc"
-                                                        @render.express
-                                                        def misc_today():
-                                                            df = filtered_df()
-                                                            today = date.today()
-                                                            today_expenses = df[
-                                                                df["Expense Date"].dt.date == today
-                                                            ]
-                                                            today_misc = today_expenses[today_expenses['Category'] == 'Misc']["Price NZD"].sum()
-                                                            f"${today_misc:,.2f}"
+                                "Misc"
+                                @render.express
+                                def misc_today():
+                                    today_expenses = today_df()
+                                    price_col = input.today_currency()
+
+                                    today_misc = (
+                                        today_expenses.loc[
+                                            today_expenses["Category"] == "Misc",
+                                            price_col
+                                        ]
+                                        .sum()
+                                    )                      
+                                    f"${today_misc:,.2f}"
+
+            ui.input_radio_buttons(
+                        "today_currency",
+                        "",
+                        choices={"Price NZD": "NZD", "Price": "Local Currency"},
+                        selected="Price NZD"
+                    )
 
             @render.data_frame
             def today_table():
@@ -872,6 +885,19 @@ def journey_map_df():
     map_df["Date"] = pd.to_datetime(map_df["Expense Date"]).dt.strftime("%Y-%m-%d")
 
     return map_df.sort_values("Expense Date")
+
+
+@reactive.calc
+def today_df():
+    df = df_full.copy()
+
+    today = date.today()
+     
+    today_expenses = df[
+        df["Expense Date"].dt.date == today
+    ]
+
+    return today_expenses
 
 @reactive.effect
 @reactive.event(input.refresh_data)
