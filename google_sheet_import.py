@@ -1,4 +1,6 @@
 
+from datetime import date
+
 import pandas as pd
 import numpy as np
 import os
@@ -152,9 +154,10 @@ def add_nzd_converted_column(df):
 
         return response.json()["rates"]
 
+    end = min(df["Expense Date"].max().date(), date.today())
     rates = fetch_rates_for_period(
     df["Expense Date"].min().strftime("%Y-%m-%d"),
-    df["Expense Date"].max().strftime("%Y-%m-%d")
+    end.strftime("%Y-%m-%d")
     )
 
     def fetch_rates_for_date(target_date, max_lookback_days=120):
