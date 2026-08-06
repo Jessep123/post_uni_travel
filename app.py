@@ -598,7 +598,7 @@ with ui.layout_sidebar():
 # ================================================================================================================================
         with ui.nav_panel("Dataframe"):
             @render.data_frame
-            def table():
+            def dataframe_table():
                 df = filtered_df()
 
                 columns_to_show = [
@@ -640,6 +640,30 @@ with ui.layout_sidebar():
 # Budget Forecast Tab
 # ================================================================================================================================
 
+        def build_forecast_table():
+            """Return a daily dataframe for the forecast window with budget, observed actuals,
+            linear-forecasted actuals, and cumulative series (actuals offset by pre-window total).
+            """
+            df = df_data().copy()
+            df = df[df["Person"] == "Bridget"]
+            df = df[df["Expense Date"] >= pd.to_datetime("2026-08-13")]
+            df = df[df["Expense Date"] <= pd.to_datetime("2026-11-02")]
+            df = df[df["Category"] != "Flights"]
+            df = df.groupby("Expense Date", as_index=False)["Price NZD"].sum()
+
+            daily_total = pd.DataFrame()
+            daily_total['Date'] = pd.date_range(start='2026-08-13', end='2026-11-02')
+
+            # Budget per day: 60 until and including 2026-10-19, then 80 afterwards
+            daily_total["Budget Spend"] = np.where(
+                daily_total["Date"] > pd.to_datetime("2026-10-19"), 80, 60
+            )
+            daily_total = daily_total.merge(df, left_on="Date", right_on="Expense Date", how="left").drop(columns=["Expense Date"])
+            daily_total.rename(columns={"Price NZD": "Actual Spend"}, inplace=True)
+
+            return daily_total
+
+
         with ui.nav_panel("Forecast"):
             with ui.navset_pill(id="forecast_tabs"):
                 with ui.nav_panel("Daily"): 
@@ -647,24 +671,13 @@ with ui.layout_sidebar():
                         @render_plotly
                         def daily_forecast_plot():
                             #Actual spending dataframe
-                            df = df_data().copy()
-                            df = df[df["Person"] == "Bridget"]
-                            df = df[df["Expense Date"] >= pd.to_datetime("2026-08-13")]
-                            df = df[df["Expense Date"] <= pd.to_datetime("2026-11-02")]
-                            df = df[df["Category"] != "Flights"]
-                            df = df.groupby("Expense Date", as_index=False)["Price NZD"].sum()
-
-                            daily_total = pd.DataFrame()
-                            daily_total['Date'] = pd.date_range(start='2026-08-13', end='2026-11-02')
-
-                            daily_total["Budget Spend"] = 60
-                            daily_total = daily_total.merge(df, left_on="Date", right_on="Expense Date", how="left").drop(columns=["Expense Date"])
-                            # daily_total["Price NZD"] = daily_total["Price NZD"].fillna(0)
-                            daily_total.rename(columns={"Price NZD": "Actual Spend"}, inplace=True)
+                            daily_total = build_forecast_table().copy()
+                            daily_total["Actual Spend"] = daily_total["Actual Spend"].fillna(0)
 
                             plot_df = pd.melt(
                                 daily_total,
                                 id_vars="Date",
+                                value_vars=["Budget Spend", "Actual Spend"],
                                 var_name="Spend Type",
                                 value_name="Amount"
                             )
@@ -675,7 +688,14 @@ with ui.layout_sidebar():
                                 y="Amount",
                                 color="Spend Type",
                                 title="Budget vs Actual",
-                                template="seaborn"
+                                template="seaborn",
+                                markers=True,
+                            )
+
+                            # fig.update_traces(mode="lines+markers")
+                            fig.update_layout(
+                                xaxis_title="Date",
+                                yaxis_title="Spend (NZD)",
                             )
 
                             # fig.update_xaxes(type="date", tickformat="%d %b")
@@ -694,41 +714,29 @@ with ui.layout_sidebar():
                     with ui.card():
                         @render_plotly
                         def cumulative_forecast_plot():
-                            #Actual spending dataframe
-                            df = df_data().copy()
-                            df = df[df["Person"] == "Bridget"]
-                            df = df[df["Expense Date"] >= pd.to_datetime("2026-08-13")]
-                            df = df[df["Expense Date"] <= pd.to_datetime("2026-11-02")]
-                            df = df[df["Category"] != "Flights"]
-                            df = df.groupby("Expense Date", as_index=False)["Price NZD"].sum()
-                            daily_total = pd.DataFrame()
-                            daily_total["Date"] = pd.date_range(start="2026-08-13", end="2026-11-02")
+                            # Actual spending dataframe
+                            daily_total = build_forecast_table().copy()
+                            observed_mask = daily_total["Actual Spend"].notna()
+                            daily_total["Actual Spend"] = daily_total["Actual Spend"].fillna(0)
 
-                            daily_total["Budget Spend"] = 60
-                            daily_total = daily_total.merge(
-                                df, left_on="Date", right_on="Expense Date", how="left"
-                            ).drop(columns=["Expense Date"])
-                            daily_total.rename(columns={"Price NZD": "Actual Spend"}, inplace=True)
-
-                            # Forecasting: fit a simple linear trend to observed actuals and predict across the whole range.
-                            observed = daily_total[daily_total["Actual Spend"].notna()].copy()
+                            observed = daily_total.loc[observed_mask].copy()
+                            daily_total["Forecast Actual"] = daily_total["Actual Spend"].copy()
 
                             if len(observed) >= 2:
                                 x_obs = observed["Date"].map(pd.Timestamp.toordinal).values
                                 y_obs = observed["Actual Spend"].values
                                 coeffs = np.polyfit(x_obs, y_obs, 1)
-                                x_all = daily_total["Date"].map(pd.Timestamp.toordinal).values
-                                preds = np.polyval(coeffs, x_all)
-                                forecast_actual = np.where(preds < 0, 0, preds)
-                            elif len(observed) == 1:
-                                # single observed day -> use that value as flat forecast
-                                flat = observed["Actual Spend"].iloc[0]
-                                forecast_actual = np.full(len(daily_total), flat)
-                            else:
-                                # no observed data -> forecast zero
-                                forecast_actual = np.zeros(len(daily_total))
 
-                            daily_total["Forecast Actual"] = forecast_actual
+                                missing_mask = ~observed_mask
+                                if missing_mask.any():
+                                    x_missing = daily_total.loc[missing_mask, "Date"].map(pd.Timestamp.toordinal).values
+                                    preds = np.polyval(coeffs, x_missing)
+                                    daily_total.loc[missing_mask, "Forecast Actual"] = np.where(preds < 0, 0, preds)
+                            elif len(observed) == 1:
+                                flat = observed["Actual Spend"].iloc[0]
+                                daily_total.loc[~observed_mask, "Forecast Actual"] = flat
+                            else:
+                                daily_total["Forecast Actual"] = np.zeros(len(daily_total))
 
                             # Cumulative series
                             daily_total["Cumulative Budget"] = daily_total["Budget Spend"].cumsum()
@@ -756,7 +764,6 @@ with ui.layout_sidebar():
                                 template="seaborn",
                             )
 
-                            # Improve axes & hover
                             fig.update_xaxes(type="date", tickformat="%d %b")
                             fig.update_layout(
                                 xaxis_title="Date",
@@ -806,6 +813,11 @@ with ui.layout_sidebar():
 
                             return fig
 
+                    # @render.data_frame
+                    # def cum_table():
+                    #     df = build_forecast_table()
+ 
+                    #     return render.DataGrid(df)
 # ================================================================================================================================
 # Reactive calcs and functions
 # ================================================================================================================================
