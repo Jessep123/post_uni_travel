@@ -631,9 +631,180 @@ with ui.layout_sidebar():
                         f"${jesse_owe:,.2f}"
                         f"</span>"
                     )
+
             @render.data_frame
             def transfer_table():
                 return render.DataGrid(transfer_df)
+
+# ================================================================================================================================
+# Budget Forecast Tab
+# ================================================================================================================================
+
+        with ui.nav_panel("Forecast"):
+            with ui.navset_pill(id="forecast_tabs"):
+                with ui.nav_panel("Daily"): 
+                    with ui.card():
+                        @render_plotly
+                        def daily_forecast_plot():
+                            #Actual spending dataframe
+                            df = df_data().copy()
+                            df = df[df["Person"] == "Bridget"]
+                            df = df[df["Expense Date"] >= pd.to_datetime("2026-08-13")]
+                            df = df[df["Expense Date"] <= pd.to_datetime("2026-11-02")]
+                            df = df[df["Category"] != "Flights"]
+                            df = df.groupby("Expense Date", as_index=False)["Price NZD"].sum()
+
+                            daily_total = pd.DataFrame()
+                            daily_total['Date'] = pd.date_range(start='2026-08-13', end='2026-11-02')
+
+                            daily_total["Budget Spend"] = 60
+                            daily_total = daily_total.merge(df, left_on="Date", right_on="Expense Date", how="left").drop(columns=["Expense Date"])
+                            # daily_total["Price NZD"] = daily_total["Price NZD"].fillna(0)
+                            daily_total.rename(columns={"Price NZD": "Actual Spend"}, inplace=True)
+
+                            plot_df = pd.melt(
+                                daily_total,
+                                id_vars="Date",
+                                var_name="Spend Type",
+                                value_name="Amount"
+                            )
+
+                            fig = px.line(
+                                plot_df,
+                                x="Date",
+                                y="Amount",
+                                color="Spend Type",
+                                title="Budget vs Actual",
+                                template="seaborn"
+                            )
+
+                            # fig.update_xaxes(type="date", tickformat="%d %b")
+                            # fig.update_layout(
+                            #     xaxis_title="Date",
+                            #     yaxis_title="Cumulative Spend (NZD)",
+                            #     hovermode="x unified"
+                            # )
+                            # fig.update_traces(
+                            #     hovertemplate="<b>%{x|%d %b %Y}</b><br>Cumulative Spend: $%{y:,.2f}<extra></extra>"
+                            # )
+
+                            return fig
+
+                with ui.nav_panel("Cumulative Spend"):
+                    with ui.card():
+                        @render_plotly
+                        def cumulative_forecast_plot():
+                            #Actual spending dataframe
+                            df = df_data().copy()
+                            df = df[df["Person"] == "Bridget"]
+                            df = df[df["Expense Date"] >= pd.to_datetime("2026-08-13")]
+                            df = df[df["Expense Date"] <= pd.to_datetime("2026-11-02")]
+                            df = df[df["Category"] != "Flights"]
+                            df = df.groupby("Expense Date", as_index=False)["Price NZD"].sum()
+                            daily_total = pd.DataFrame()
+                            daily_total["Date"] = pd.date_range(start="2026-08-13", end="2026-11-02")
+
+                            daily_total["Budget Spend"] = 60
+                            daily_total = daily_total.merge(
+                                df, left_on="Date", right_on="Expense Date", how="left"
+                            ).drop(columns=["Expense Date"])
+                            daily_total.rename(columns={"Price NZD": "Actual Spend"}, inplace=True)
+
+                            # Forecasting: fit a simple linear trend to observed actuals and predict across the whole range.
+                            observed = daily_total[daily_total["Actual Spend"].notna()].copy()
+
+                            if len(observed) >= 2:
+                                x_obs = observed["Date"].map(pd.Timestamp.toordinal).values
+                                y_obs = observed["Actual Spend"].values
+                                coeffs = np.polyfit(x_obs, y_obs, 1)
+                                x_all = daily_total["Date"].map(pd.Timestamp.toordinal).values
+                                preds = np.polyval(coeffs, x_all)
+                                forecast_actual = np.where(preds < 0, 0, preds)
+                            elif len(observed) == 1:
+                                # single observed day -> use that value as flat forecast
+                                flat = observed["Actual Spend"].iloc[0]
+                                forecast_actual = np.full(len(daily_total), flat)
+                            else:
+                                # no observed data -> forecast zero
+                                forecast_actual = np.zeros(len(daily_total))
+
+                            daily_total["Forecast Actual"] = forecast_actual
+
+                            # Cumulative series
+                            daily_total["Cumulative Budget"] = daily_total["Budget Spend"].cumsum()
+                            daily_total["Cumulative Actual"] = daily_total["Forecast Actual"].cumsum()
+
+                            # Final totals to display as annotations
+                            final_budget = daily_total["Cumulative Budget"].iloc[-1]
+                            final_actual = daily_total["Cumulative Actual"].iloc[-1]
+                            delta = final_actual - final_budget
+
+                            plot_df = pd.melt(
+                                daily_total,
+                                id_vars="Date",
+                                value_vars=["Cumulative Budget", "Cumulative Actual"],
+                                var_name="Spend Type",
+                                value_name="Amount",
+                            )
+
+                            fig = px.line(
+                                plot_df,
+                                x="Date",
+                                y="Amount",
+                                color="Spend Type",
+                                title="Cumulative Budget vs Actual (forecast)",
+                                template="seaborn",
+                            )
+
+                            # Improve axes & hover
+                            fig.update_xaxes(type="date", tickformat="%d %b")
+                            fig.update_layout(
+                                xaxis_title="Date",
+                                yaxis_title="Cumulative Spend (NZD)",
+                                hovermode="x unified",
+                                legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5),
+                            )
+
+                            fig.update_traces(
+                                hovertemplate=("<b>%{fullData.name}</b><br>" "Date: %{x|%d %b %Y}<br>" "Cumulative: $%{y:,.2f}<extra></extra>")
+                            )
+
+                            # Add annotations for the final cumulative values
+                            last_date = daily_total["Date"].iloc[-1]
+
+                            fig.add_annotation(
+                                x=last_date,
+                                y=final_budget,
+                                text=f"Budget: ${final_budget:,.2f}",
+                                showarrow=False,
+                                # arrowhead=1,
+                                ax=-60,
+                                ay=-30,
+                                bgcolor="rgba(255,255,255,0.8)",
+                            )
+
+                            fig.add_annotation(
+                                x=last_date,
+                                y=final_actual,
+                                text=f"Actual (forecast): ${final_actual:,.2f}",
+                                showarrow=False,
+                                # arrowhead=1,
+                                ax=-60,
+                                ay=30,
+                                bgcolor="rgba(255,255,255,0.8)",
+                            )
+
+                            # Add delta annotation
+                            fig.add_annotation(
+                                x=last_date,
+                                y=max(final_budget, final_actual),
+                                text=(f"Δ ${delta:,.2f}" if delta >= 0 else f"Δ -${abs(delta):,.2f}"),
+                                showarrow=False,
+                                yshift=60,
+                                bgcolor="rgba(255,255,255,0.8)",
+                            )
+
+                            return fig
 
 # ================================================================================================================================
 # Reactive calcs and functions
