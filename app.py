@@ -493,64 +493,23 @@ with ui.layout_sidebar():
                     map_df["Date"] = map_df["Date"].fillna("").astype(str)
                     map_df[category_cols] = map_df[category_cols].fillna(0)
 
-                    # customdata = np.stack(
-                    #     [map_df["town"], map_df["Date"]] + [map_df[c] for c in category_cols],
-                    #     axis=-1
-                    # )
-
-                    # hover_lines = [
-                    #     "<b>%{customdata[0]}</b>",
-                    #     "Date: %{customdata[1]}",
-                    # ]
-                    # for i, col in enumerate(category_cols, start=2):
-                    #     hover_lines.append(f"{col}: $%{{customdata[{i}]:.2f}}")
-
-                    # hovertemplate = "<br>".join(hover_lines) + "<extra></extra>"
-                    
-                    # def make_hover_text(row):
-                    #     lines = [f"<b>{row['town']}</b>", f"Date: {row['Date']}"]
-
-                    #     for col in category_cols:
-                    #         val = row[col]
-                    #         if pd.notna(val) and val != 0:
-                    #             lines.append(f"{col}: ${val:.2f}")
-
-                    #     return "<br>".join(lines) + "<extra></extra>"
-
-                    # hover_text = map_df.apply(make_hover_text, axis=1)
-
-                    # Build grouped hover text by location
+                    # Build hover text so each location shows all its dates with the daily total spend
                     hover_lookup = {}
-
                     group_cols = ["latitude", "longitude", "town"]
 
                     for (lat_val, lon_val, town_val), group in map_df.groupby(group_cols, sort=False):
-
                         lines = [f"<b>{town_val}</b>"]
-
-                        # sort by date so hover is chronological
                         group = group.sort_values("Expense Date")
 
                         for _, row in group.iterrows():
+                            total_spend = float(row.get("Total", 0) or 0)
+                            lines.append(f"{row['Date']} — ${total_spend:,.2f}")
 
-                            lines.append(f"Date: {row['Date']}")
+                        hover_lookup[(lat_val, lon_val, town_val)] = "<br>".join(lines) + "<extra></extra>"
 
-                            for col in category_cols:
-                                val = row[col]
-
-                                if pd.notna(val) and val != 0:
-                                    lines.append(f"{col}: ${val:.2f}")
-
-                        hover_lookup[(lat_val, lon_val, town_val)] = (
-                            "<br>".join(lines) + "<extra></extra>"
-                        )
-
-                    # assign hover text back to every row
                     hover_text = map_df.apply(
-                        lambda row: hover_lookup[
-                            (row["latitude"], row["longitude"], row["town"])
-                        ],
-                        axis=1
+                        lambda row: hover_lookup[(row["latitude"], row["longitude"], row["town"])],
+                        axis=1,
                     )
 
                     fig = go.Figure(
@@ -946,6 +905,7 @@ def reset_filters():
     ui.update_date_range("date_range", start=min_date, end=max_date)
     ui.update_checkbox_group("who", selected=["Jesse"])
     ui.update_radio_buttons("avg_type", selected = "mean")
+    ui.update_checkbox_group("where", selected=country_choices())
 
 @reactive.calc
 def category_choices():
@@ -1027,6 +987,7 @@ def bar_data():
 @reactive.calc
 def journey_map_df():
     df = filtered_df().copy()
+    df = df[df["Category"] != "Flights"].copy()
     df["Expense Date"] = pd.to_datetime(df["Expense Date"]).dt.normalize()
 
     daily_category = (
@@ -1065,7 +1026,7 @@ def journey_map_df():
     )
 
     map_df = pd.merge(map_df, geo_df, on="Expense Date", how="inner")
-    map_df["Date"] = pd.to_datetime(map_df["Expense Date"]).dt.strftime("%Y-%m-%d")
+    map_df["Date"] = pd.to_datetime(map_df["Expense Date"]).dt.strftime("%a %d %b")
 
     return map_df.sort_values("Expense Date")
 
