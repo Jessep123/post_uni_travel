@@ -217,6 +217,14 @@ with ui.layout_sidebar():
                                                          
                                     f"${today_misc:,.2f}"
 
+            ui.input_date(
+                "today_date",
+                "Select day",
+                value=date.today(),
+                min=min_date,
+                max=max_date,
+            )
+
             ui.input_radio_buttons(
                         "today_currency",
                         "",
@@ -903,6 +911,7 @@ def avg_calc(data):
 @reactive.event(input.reset)
 def reset_filters():
     ui.update_date_range("date_range", start=min_date, end=max_date)
+    ui.update_date("today_date", value=date.today())
     ui.update_checkbox_group("who", selected=["Jesse"])
     ui.update_radio_buttons("avg_type", selected = "mean")
     ui.update_checkbox_group("where", selected=country_choices())
@@ -1035,11 +1044,17 @@ def journey_map_df():
 def today_df():
     df = filtered_df_person().copy()
 
-    today = date.today()
-     
+    selected_day = input.today_date()
+    if selected_day is None:
+        selected_day = date.today()
+
+    df = df[df["Category"] != "Flights"].copy()
+
     today_expenses = df[
-        df["Expense Date"].dt.date == today
+        df["Expense Date"].dt.date == selected_day
     ]
+
+    
 
     return today_expenses
 
