@@ -76,18 +76,22 @@ ui.tags.style("""
     flex-direction: row !important;
     align-items: center !important;
     gap: 12px;
-    min-height: 90px;
+    min-height: 92px;
+    padding: 10px 12px;
 }
 
 .bslib-value-box .value-box-showcase {
     order: 0;
     flex-shrink: 0;
     margin: 0;
+    width: 70px !important;
+    height: 70px !important;
 }
 
 .bslib-value-box .value-box-area {
     order: 1;
     flex: 1;
+    min-width: 0;
 }
 
 .sidebar {
@@ -96,20 +100,29 @@ ui.tags.style("""
 
 @media (max-width: 768px) {
     .bslib-value-box {
-        flex-direction: column !important;
-        align-items: flex-start !important;
-        gap: 8px;
-        padding: 10px;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 10px;
+        padding: 8px 10px;
+        min-height: 78px;
     }
 
     .bslib-value-box .value-box-showcase {
-        width: 100% !important;
-        max-width: 80px;
-        margin-bottom: 6px;
+        width: 56px !important;
+        height: 56px !important;
+        flex-shrink: 0;
+        margin: 0;
     }
 
     .bslib-value-box .value-box-area {
-        width: 100%;
+        width: auto;
+        flex: 1;
+    }
+
+    .bslib-value-box .value-box-area .value-box-title,
+    .bslib-value-box .value-box-area .value-box-value {
+        font-size: 0.95rem;
+        line-height: 1.2;
     }
 
     .shiny-input-container {
@@ -568,9 +581,9 @@ with ui.layout_sidebar():
                     mode="markers+lines",
                     text=hover_text,
                     hovertemplate="%{text}",
-                    # customdata=customdata,
-                    # hovertemplate=hovertemplate,
                     hoverlabel=dict(namelength=-1),
+                    marker=dict(size=10, color="#1f77b4", opacity=0.9),
+                    line=dict(width=2, color="#1f77b4", opacity=0.7),
                 )
             )
 
