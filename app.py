@@ -69,15 +69,14 @@ def rebuild_data():
 # ================================================================================================================================
 # UI
 # ================================================================================================================================
-# Add page title and sidebar
-ui.page_opts(title="Jesse + Bridget Camino Adventure", fillable=True)
 
 ui.tags.style("""
 .bslib-value-box {
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
-    gap: 16px;
+    gap: 12px;
+    min-height: 90px;
 }
 
 .bslib-value-box .value-box-showcase {
@@ -89,6 +88,37 @@ ui.tags.style("""
 .bslib-value-box .value-box-area {
     order: 1;
     flex: 1;
+}
+
+.sidebar {
+    padding: 12px !important;
+}
+
+@media (max-width: 768px) {
+    .bslib-value-box {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px;
+        padding: 10px;
+    }
+
+    .bslib-value-box .value-box-showcase {
+        width: 100% !important;
+        max-width: 80px;
+        margin-bottom: 6px;
+    }
+
+    .bslib-value-box .value-box-area {
+        width: 100%;
+    }
+
+    .shiny-input-container {
+        margin-bottom: 8px;
+    }
+
+    .form-group, .checkboxgroup, .radio-buttons {
+        font-size: 0.95rem;
+    }
 }
 """)
 
