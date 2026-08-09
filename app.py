@@ -583,7 +583,7 @@ with ui.layout_sidebar():
                     hovertemplate="%{text}",
                     hoverlabel=dict(namelength=-1),
                     marker=dict(size=10, color="#1f77b4", opacity=0.9),
-                    line=dict(width=2, color="#1f77b4", opacity=0.7),
+                    line=dict(width=2, color="#1f77b4"),
                 )
             )
 
@@ -600,11 +600,11 @@ with ui.layout_sidebar():
             fig.update_layout(
                 map=dict(
                     center=center,
-                    zoom=zoom,
+                    # zoom=zoom,
                     style="open-street-map",
                 ),
                 margin={"r": 0, "t": 0, "l": 0, "b": 0},
-                height=650,
+                # height=650,
             )
 
             return fig              
@@ -709,14 +709,19 @@ with ui.layout_sidebar():
                             y="Amount",
                             color="Spend Type",
                             title="Budget vs Actual",
-                            template="seaborn",
-                            markers=True,
+                            template="seaborn"
+                            # markers=True,
                         )
 
                         # fig.update_traces(mode="lines+markers")
                         fig.update_layout(
                             xaxis_title="Date",
                             yaxis_title="Spend (NZD)",
+                            showlegend=True
+                        )
+
+                        fig.update_traces(
+                            hovertemplate=("<b>%{fullData.name}</b><br>" "Date: %{x|%d %b %Y}<br>" "Cumulative: $%{y:,.2f}<extra></extra>")
                         )
 
                         # fig.update_xaxes(type="date", tickformat="%d %b")
