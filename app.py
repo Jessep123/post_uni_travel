@@ -121,7 +121,7 @@ ui.tags.style("""
 
     .bslib-value-box .value-box-area .value-box-title,
     .bslib-value-box .value-box-area .value-box-value {
-        font-size: 0.95rem;
+        font-size: 1.25rem;
         line-height: 1.2;
     }
 
