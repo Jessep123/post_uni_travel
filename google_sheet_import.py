@@ -118,6 +118,34 @@ def get_google_sheet_data():
 
     return df, transfer_df
 
+# ---------------------------------------------------------------------------
+# Both
+# ---------------------------------------------------------------------------
+
+def split_both_rows(df):
+    """
+    Split rows where user is 'both' into two duplicate rows, one for Jesse and one for Bridget
+    """
+
+    rows = []
+
+    for _, row in df.iterrows():
+        user = str(
+            row.get("Person", "")
+        ).strip().casefold()
+
+        if user == "both":
+            for person in ["Jesse", "Bridget"]:
+                new_row = row.copy()
+                new_row["Person"] = person
+                new_row["Price"] = row.get("Price") / 2
+                rows.append(new_row)
+        else:
+            rows.append(row.copy())
+
+    out = pd.DataFrame(rows).reset_index(drop=True)
+
+    return out
 
 # ---------------------------------------------------------------------------
 # Accommodation
@@ -444,8 +472,12 @@ def add_nzd_converted_column(df):
 def load_processed_data():
     df_full, transfer = get_google_sheet_data()
 
-    df_accom_split = split_accommodation_rows(
+    df_both_split = split_both_rows(
         df_full
+    )
+
+    df_accom_split = split_accommodation_rows(
+        df_both_split
     )
 
     df_final = add_nzd_converted_column(
