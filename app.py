@@ -199,6 +199,14 @@ with ui.layout_sidebar():
 # ================================================================================================================================
     with ui.panel_conditional("input.view == 'Today'"):
                 with ui.layout_columns(fill=False):
+                    ui.input_date(
+                                            "today_date",
+                                            "Select day",
+                                            value=date.today(),
+                                            min=min_date,
+                                            max=max_date,
+                                        )
+                    
                     with ui.value_box(showcase=ui.img(src="flight_socks.jpeg", style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-top: 10px;", showcase_layout="left center")):
                         "Total"
                         @render.express
@@ -270,13 +278,7 @@ with ui.layout_sidebar():
                             f"${today_misc:,.2f}"
 
                     
-                    ui.input_date(
-                        "today_date",
-                        "Select day",
-                        value=date.today(),
-                        min=min_date,
-                        max=max_date,
-                    )
+                    
 
                     ui.input_radio_buttons(
                         "today_currency",
