@@ -762,7 +762,8 @@ with ui.layout_sidebar():
                         fig.update_layout(
                             xaxis_title="Date",
                             yaxis_title="Spend (NZD)",
-                            showlegend=True
+                            showlegend=True,
+                            legendposition="bottom"
                         )
 
                         fig.update_traces(
