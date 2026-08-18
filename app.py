@@ -88,6 +88,11 @@ ui.tags.style("""
     height: 70px !important;
 }
 
+.bslib-value-box .value-box-showcase img {
+    width: 100% !important;
+    height: 100% !important;
+}
+
 .bslib-value-box .value-box-area {
     order: 1;
     flex: 1;
@@ -131,6 +136,44 @@ ui.tags.style("""
 
     .form-group, .checkboxgroup, .radio-buttons {
         font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .bslib-value-box {
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 6px;
+        padding: 6px 8px;
+        min-height: 60px;
+    }
+
+    .bslib-value-box .value-box-showcase {
+        width: 44px !important;
+        height: 44px !important;
+        flex-shrink: 0;
+        margin: 0;
+    }
+
+    .bslib-value-box .value-box-showcase img {
+        width: 44px !important;
+        height: 44px !important;
+        margin-top: 0 !important;
+    }
+
+    .bslib-value-box .value-box-area {
+        width: auto;
+        flex: 1;
+    }
+
+    .bslib-value-box .value-box-area .value-box-title {
+        font-size: 0.85rem;
+        line-height: 1.1;
+    }
+
+    .bslib-value-box .value-box-area .value-box-value {
+        font-size: 1rem;
+        line-height: 1.1;
     }
 }
 """)
@@ -207,7 +250,7 @@ with ui.layout_sidebar():
                                             max=max_date,
                                         )
                     
-                    with ui.value_box(showcase=ui.img(src="flight_socks.jpeg", style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-top: 10px;", showcase_layout="left center")):
+                    with ui.value_box(showcase=ui.img(src="flight_socks.jpeg", style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; margin-top: 10px;", showcase_layout="left center")):
                         "Total"
                         @render.express
                         def today_cost():
@@ -216,7 +259,7 @@ with ui.layout_sidebar():
                             cost = today_expenses[price_col].sum()
                             f"${cost:,.2f}"
 
-                    with ui.value_box(showcase=ui.img(src="chomp.jpeg", style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-top: 10px;", showcase_layout="left center")):
+                    with ui.value_box(showcase=ui.img(src="chomp.jpeg", style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; margin-top: 10px;", showcase_layout="left center")):
                         "Food"
                         @render.express
                         def food_today():
@@ -231,7 +274,7 @@ with ui.layout_sidebar():
                             )
                             f"${today_food:,.2f}"
 
-                    with ui.value_box(showcase=ui.img(src="nap.jpeg", style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-top: 10px;", showcase_layout="left center")):
+                    with ui.value_box(showcase=ui.img(src="nap.jpeg", style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; margin-top: 10px;", showcase_layout="left center")):
                         "Accom"
                         @render.express
                         def accom_today():
@@ -246,7 +289,7 @@ with ui.layout_sidebar():
                             )
                             f"${today_accom:,.2f}"
 
-                    with ui.value_box(showcase=ui.img(src="walk.jpeg", style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-top: 10px;", showcase_layout="left center")):
+                    with ui.value_box(showcase=ui.img(src="walk.jpeg", style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; margin-top: 10px;", showcase_layout="left center")):
                         "Transport"
                         @render.express
                         def transport_today():
@@ -261,7 +304,7 @@ with ui.layout_sidebar():
                             )
                             f"${today_transport:,.2f}"
 
-                    with ui.value_box(showcase=ui.img(src="woof.jpeg", style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-top: 10px;", showcase_layout="left center")):
+                    with ui.value_box(showcase=ui.img(src="woof.jpeg", style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; margin-top: 10px;", showcase_layout="left center")):
                         "Misc"
                         @render.express
                         def misc_today():
@@ -310,7 +353,7 @@ with ui.layout_sidebar():
 
     with ui.panel_conditional("input.view == 'Summary Stats'"):
         with ui.layout_columns(fill=False):
-            with ui.value_box(showcase=ui.img(src="7_11_bby.JPG", style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-top: 10px;", showcase_layout="left center")):
+            with ui.value_box(showcase=ui.img(src="7_11_bby.JPG", style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; margin-top: 10px;", showcase_layout="left center")):
                 "Daily Spend"
                 @render.express
                 def daily_spend():
@@ -319,7 +362,7 @@ with ui.layout_sidebar():
                     value = avg_calc(daily_total)
                     f"${value:,.2f}"
 
-            with ui.value_box(showcase=ui.img(src="chomp.jpeg", style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-top: 10px;", showcase_layout="left center")):
+            with ui.value_box(showcase=ui.img(src="chomp.jpeg", style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; margin-top: 10px;", showcase_layout="left center")):
                 "Daily Food"
                 @render.express
                 def daily_food():
@@ -328,7 +371,7 @@ with ui.layout_sidebar():
                     value = avg_calc(daily_food)
                     f"${value:,.2f}"
 
-            with ui.value_box(showcase=ui.img(src="nap.jpeg", style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-top: 10px;", showcase_layout="left center")):
+            with ui.value_box(showcase=ui.img(src="nap.jpeg", style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; margin-top: 10px;", showcase_layout="left center")):
                 "Accom"
                 @render.express
                 def accom_av():
@@ -337,7 +380,7 @@ with ui.layout_sidebar():
                     value = avg_calc(accom)
                     f"${value:,.2f}"
 
-            with ui.value_box(showcase=ui.img(src="flight_socks.jpeg", style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-top: 10px;", showcase_layout="left center")):
+            with ui.value_box(showcase=ui.img(src="flight_socks.jpeg", style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; margin-top: 10px;", showcase_layout="left center")):
                 "Total"
                 @render.express
                 def flight_cost():
