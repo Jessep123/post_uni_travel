@@ -199,7 +199,7 @@ with ui.layout_sidebar():
             "who",
             "Which Person",
             ["Jesse", "Bridget"],
-            selected=["Jesse"],
+            selected="Jesse",
             inline=True,
         )
 
@@ -207,7 +207,7 @@ with ui.layout_sidebar():
             "where",
             "Country",
             choices=sorted(df_full["country"].dropna().unique().tolist()),
-            selected=sorted(df_full["country"].dropna().unique().tolist()),
+            selected=[],
             inline=True,
         )
 
@@ -920,7 +920,7 @@ def filtered_df_person():
 
     selected_people = input.who()
     if selected_people:
-        df = df[df["Person"].isin(selected_people)]
+        df = df[df["Person"] == selected_people]
 
     return df
 
@@ -943,8 +943,7 @@ def country_choices():
 def _():
     ui.update_checkbox_group(
         "where",
-        choices=country_choices(),
-        selected=country_choices()
+        choices=country_choices()
     )
 
 @reactive.calc
@@ -1017,9 +1016,9 @@ def avg_calc(data):
 def reset_filters():
     ui.update_date_range("date_range", start=min_date, end=max_date)
     ui.update_date("today_date", value=date.today())
-    ui.update_checkbox_group("who", selected=["Jesse"])
+    ui.update_radio_buttons("who", selected="Jesse")
     ui.update_radio_buttons("avg_type", selected = "mean")
-    ui.update_checkbox_group("where", selected=country_choices())
+    ui.update_checkbox_group("where", selected=[])
 
 @reactive.calc
 def category_choices():
@@ -1179,5 +1178,5 @@ def _():
     ui.update_checkbox_group(
         "where",
         choices=sorted(df_full["country"].dropna().unique().tolist()),
-        selected=sorted(df_full["country"].dropna().unique().tolist()),
+        selected=[],
     )
