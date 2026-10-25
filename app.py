@@ -195,7 +195,7 @@ with ui.layout_sidebar():
             max=max_date,
         )
 
-        ui.input_checkbox_group(
+        ui.input_radio_buttons(
             "who",
             "Which Person",
             ["Jesse", "Bridget"],
